@@ -1,0 +1,159 @@
+---
+title: "Untitled"
+author: "Akhil Gorla"
+date: "2025-10-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages('janitor')
+```
+
+# ============================================================
+# Title: Research Experience and Project Preference Analysis
+# Author: Akhil Gorla
+# Purpose: Analyze how students' project type and language preferences
+#          vary by prior research experience
+# ============================================================
+
+# ---- Load Libraries ----
+```{r}
+
+library(tidyverse)
+library(janitor)
+
+# ---- Load Data ----
+background <- read_csv("data/background-clean.csv") %>% clean_names()
+interest   <- read_csv("data/interest-clean.csv") %>% clean_names()
+metadata   <- read_csv("data/survey-metadata.csv") %>% clean_names()
+
+
+```
+# ---- Inspect Data ----
+```{r}
+glimpse(background)
+glimpse(interest)
+```
+
+
+
+```{r}
+
+names(background)
+names(interest)
+```
+
+# ---- Load Data ----
+```{r}
+merged <- background %>%
+  inner_join(interest, by = "response_id")
+```
+
+
+# ---- Merge Datasets ----
+```{r}
+merged <- merged %>%
+  select(response_id,
+         prior_research = rsrch,
+         preferred_project = type,
+         preferred_language = lang) %>%
+  mutate(
+    prior_research = ifelse(prior_research == TRUE, "Yes", "No"),
+    preferred_project = case_when(
+      preferred_project == "ind" ~ "Industry",
+      preferred_project == "lab" ~ "Lab",
+      preferred_project == "both" ~ "Both",
+      TRUE ~ NA_character_
+    ),
+    preferred_language = str_to_title(preferred_language)
+  ) %>%
+  drop_na(prior_research, preferred_project, preferred_language)
+
+```
+
+
+
+```{r}
+merged <- merged %>%
+  mutate(
+    preferred_language_simplified = case_when(
+      str_detect(preferred_language, regex("python", ignore_case = TRUE)) ~ "Python",
+      str_detect(preferred_language, regex("^r$", ignore_case = TRUE)) ~ "R",
+      str_detect(preferred_language, regex("no pref", ignore_case = TRUE)) ~ "No Preference",
+      TRUE ~ "Other / Mixed"
+    )
+  )
+glimpse(merged)
+```
+
+# ---- Summary Tables ----
+```{r}
+project_pref_table <- merged %>%
+  count(prior_research, preferred_project) %>%
+  group_by(prior_research) %>%
+  mutate(prop = n / sum(n))
+
+project_pref_table
+```
+
+```{r}
+language_pref_table <- merged %>%
+  count(prior_research, preferred_language_simplified) %>%
+  group_by(prior_research) %>%
+  mutate(prop = n / sum(n))
+```
+
+```{r}
+ggplot(project_pref_table, aes(x = prior_research, y = prop, fill = preferred_project)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Project Type Preference by Research Experience",
+    x = "Prior Research Experience",
+    y = "Percentage of Students",
+    fill = "Project Type"
+  ) +
+  theme_bw()
+```
+
+```{r}
+ggplot(language_pref_table, aes(x = prior_research, y = prop, fill = preferred_language_simplified)) +
+  geom_col(position = "dodge") +
+  geom_text(
+    aes(label = scales::percent(prop, accuracy = 1)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Programming Language Preference by Research Experience",
+    x = "Prior Research Experience",
+    y = "Percentage of Students",
+    fill = "Preferred Language"
+  ) +
+  theme_bw(base_size = 13) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+```
+
+```{r}
+project_chi <- chisq.test(table(merged$prior_research, merged$preferred_project))
+language_chi <- chisq.test(table(merged$prior_research, merged$preferred_language))
+```
+
+```{r}
+cat("\n--- Chi-Squared Test: Project Type Preference ---\n")
+print(project_chi)
+
+cat("\n--- Chi-Squared Test: Language Preference ---\n")
+print(language_chi)
+
+```
+
