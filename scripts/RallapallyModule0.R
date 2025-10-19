@@ -1,4 +1,8 @@
 library(tidyverse)
+library(dplyr)
+
+df <- read_csv("data/background-clean.csv")
+
 
 # Convert proficiency to numeric 
 df <- df %>%
