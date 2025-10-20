@@ -1,0 +1,88 @@
+---
+title: "Analysis of class surveys"
+author: "Pratyush Rallapally, Anish Senthil, Satvik Talchuru, Andrew Guerra, Akhil Gorla"
+date: last-modified
+published-title: "Updated"
+editor: visual
+format: html
+code-copy: true
+execute:
+  message: false
+  warning: false
+  echo: false
+  cache: true
+---
+
+Use this as a template. Keep the headers and remove all other text. Overall, your report may be quite short. When it is complete, render and then push changes to your team repository.
+
+```{r}
+# load any other packages and read data here
+library(tidyverse)
+```
+
+## Executive summary
+
+This study investigated the relationship between the number of upper-division courses taken and the students' self-reported levels of programming, math, and statistics competency. We investigated whether proficiency levels (beginning, intermediate, and advanced) differed across course-load groups (0–2, 3–5, 6–8, and 9+) using visualizations (boxplots) and Chi-square tests of independence. The findings showed no statistically significant correlation between the number of upper-division courses taken and programming or math skills. Nonetheless, there was a substantial and significant correlation between upper-division coursework and statistics competency, indicating that students who have taken more upper-division courses are more likely to report feeling confident about their statistical abilities.## Data description
+
+## Data description
+
+The information was gathered from a survey conducted with students registered in the PSTAT 197 course at UCSB. Every student self-reported their perceived skill levels in programming, mathematics, and statistics, along with the quantity of upper-division courses they had finished. The sample includes 51 respondents, showcasing a variety of academic backgrounds in the statistics and data science program. The primary variables consist of categorical indicators for proficiency in programming, mathematics, and statistics (classified as beginner, intermediate, or advanced) and an ordinal categorical variable for upper-level courses (grouped as 0–2, 3–5, 6–8, and 9+ courses). These approaches consider both personal evaluations of ability and factual signs of educational engagement. The cleaned dataset (background-clean.csv) was examined using R to discover connections between proficiency levels and course experience via descriptive visualizations and inferential tests## Questions of interest
+
+## Questions
+
+We sought to see if the proficiency in math,computer science, or statistics had any correlation or relation to the amount of upper division courses taken.
+Does programming proficiency increase with the number of upper-division courses taken?
+ No significant relationship was found between programming proficiency and upper-division course count (χ²(6)=7.40, p=0.29).
+
+Does mathematics proficiency vary by the number of upper-division courses completed?
+ No significant relationship was observed between math proficiency and course count (χ²(6)=8.69, p=0.19).
+
+Is there an association between statistics proficiency and upper-division coursework?
+Yes, a strong and statistically significant relationship was found (χ²(6)=39.1, p<0.001, Cramér’s V=0.58), indicating that students with more upper-division coursework tend to report higher statistics proficiency.
+
+## Findings
+The analysis examined whether students’ self-reported proficiency in programming, math, and statistics was associated with the number of upper-division courses they had completed. To visualize the data, boxplots were created comparing upper-division course counts (approximated using bin midpoints) across proficiency levels (beginner, intermediate, advanced). The figure below summarizes these distributions for each skill area.
+
+```{r, echo=FALSE, fig-cap="Boxplots showing the relationship between upper-division course count and proficiency levels in programming, math, and statistics.", out.width="100%"}
+knitr::include_graphics("results/report_files/report_files/box_updv_all_three.png")
+```
+
+From the visualizations, programming and math proficiencies show mild upward trends with increased coursework but lack clear separation between categories. In contrast, statistics proficiency displays a more distinct pattern: students who have completed more upper-division courses tend to report higher proficiency. To formally test these relationships, Chi-square tests of independence were conducted between each proficiency variable and upper-division course bins.
+
+```{r}
+library(tidyverse)
+background <- readr::read_csv("data/background-clean.csv") %>%
+  mutate(
+    updv.num  = stringr::str_trim(updv.num),
+    updv.num  = factor(updv.num, levels = c("0-2","3-5","6-8","9+"), ordered = TRUE),
+    updv_numeric = case_when(
+      updv.num == "0-2" ~ 1,
+      updv.num == "3-5" ~ 4,
+      updv.num == "6-8" ~ 7,
+      updv.num == "9+"  ~ 10,
+      TRUE ~ NA_real_
+    ),
+    prog.prof = factor(prog.prof, levels = c("beg","int","adv"), ordered = TRUE),
+    math.prof = factor(math.prof, levels = c("beg","int","adv"), ordered = TRUE),
+    stat.prof = factor(stat.prof, levels = c("beg","int","adv"), ordered = TRUE)
+  ) %>%
+  drop_na(updv_numeric, prog.prof, math.prof, stat.prof)
+
+run_chisq <- function(var_name) {
+  tab <- table(background[[var_name]], background$updv.num)
+  cs  <- chisq.test(tab, correct = FALSE)
+  cv  <- effectsize::cramers_v(tab, ci = 0.95)
+  cat("\n====", var_name, "vs updv.num ====\n")
+  print(tab)
+  cat("\nChi-square test:\n"); print(cs)
+  cat("\nCramer's V (effect size):\n"); print(cv)
+}
+
+run_chisq("prog.prof")
+run_chisq("math.prof")
+run_chisq("stat.prof")
+```
+
+The Chi-square results indicated that programming proficiency (chi sqaure(6)=7.40, p=0.29) and math proficiency (chi square(6)=8.69, p=0.19) were not significantly related to the number of upper-division courses taken. However, statistics proficiency showed a strong, significant association (chi squared (6)=39.1, p<0.001, Cramer’s V=0.58), confirming that students with more upper-division coursework are substantially more likely to report advanced statistical proficiency.
+Throughout the analysis, categorical variables were treated as ordered factors to preserve the ordinal relationships between bins (beginner to advanced, or0–2 to 9+). Missing data were removed prior to analysis to ensure consistency between variables.
+
