@@ -19,7 +19,10 @@ library(tidyverse)
 library(dplyr)
 library(readr)
 library(here)
+url <- "https://raw.githubusercontent.com/pstat197/module-0-class-survey-data-table5/main/data/"
 
+# load datasets
+background <- read_csv(paste0(url, "background-clean.csv"))
 df <- read_csv(here("data", "background-clean.csv"))
 
 # Convert proficiency to numeric 
@@ -58,9 +61,69 @@ Overall, the dataset provides a detailed profile of students’ academic prepara
 
 ## Questions of interest
 
+2.  *How does students' reported proficiency relate to the amount of upper division courses taken?*
+
+<!-- -->
+
 3.  *To what extent do students’ self-assessed proficiency in programming, mathematics, and statistics align with their reported comfort in these domains?*
 
 ## Findings
+
+To answer our question, we first observe the characteristics of both the 'updv.num' and 'stat.prof' variables. The 'updv.num' variable is an ordinal categorical variable that separates courses taken in the following way.
+
+```{r}
+unique(background$updv.num) %>% knitr::kable()
+unique(background$stat.prof) %>%  knitr::kable()
+```
+
+Furthermore, our 'stat.prof' variable is a self-reported measure of the student's perceived confidence regarding their statistics skills.
+
+Next, we created a summary table to help capture the distribution of students among both course range and frequency. Using survey data, we calculated the frequency in selection of upper-division courses among different proficiency ratings.
+
+```{r}
+survey_sum <- background %>% 
+  count(stat.prof, updv.num) %>% 
+  group_by(stat.prof) %>% 
+  mutate(prop = n / sum(n)) %>% 
+  arrange(stat.prof, desc(prop))
+
+survey_sum %>% 
+  knitr::kable(caption = "Class Survey Summary Table (updv.num and stat.prof)",
+               digits = 2)
+```
+
+Based on our table, we find that 33 students reported an advanced level of statistics proficiency, followed by 15 reporting intermediate and 3 at beginner proficiency. While both intermediate and advanced proficiencies consisted of students who have taken more than 9 upper-division PSTAT courses, no student that has taken 9 or more courses reported their proficiency as beginner. Notably, we find that two-thirds of students with an advanced proficiency (n=22) have taken 9 or more upper-division courses. Among intermediate students, one-third (n=5) report taking 9 or more upper-division courses. At a high level, it appears that a student's reported proficiency in statistics is positively correlated with the number of upper-division courses they have taken.
+
+To better visualize this trend, we created a bar-plot for each reported proficiency.
+
+```{r}
+background <- background %>% 
+  mutate(
+    stat.prof = factor(stat.prof, levels = c("beg", "int", "adv"))
+  )
+
+background %>% 
+  ggplot(mapping = aes(x = updv.num)) + 
+  facet_wrap(~ stat.prof) +
+  geom_bar(fill = "blue3", color='white') +
+  labs(
+    title = "Upper-Division PSTAT Courses by Reported Proficiency",
+    x = "Upper-Division Courses Taken",
+    y = "Number of Students"
+  ) +
+  theme_minimal()
+```
+
+Based on our bar-plot, we see a clear upward trend between students' reproted proficinecy in statistics and the number of upper-division PSTAT courses completed. Among students with beginner proficiency, course completion is concentrated in the 0-2 and 6-8 ranges, with no beginner student taking 9 or more. Intermediate students show a slightly more even distribution, however, with most having taken 6-8 courses, followed by 9 or more and 3-5 but none taking 0-2 courses. In contrast, the advanced group displays the most pronounced pattern, with most students having completed 9 or moure upper-division courses, with fewer having taken 6-8 or 3-5 courses. Overall, we see a clear trend that students' confidence in their statistics proficiency increases with more upper-division coursework.
+
+For an objective analysis, we ran a Chi-Square test of Independence to examine the relationship between students' reported statistics proficiency and the number of upper-division PSTAT courses completed.
+
+```{r}
+table(background$stat.prof, background$updv.num) %>% 
+  chisq.test()
+```
+
+The test indicated a significant association between the two variables ($\chi^2 = 39.109, df = 6, p = 6.814e-07$). This supports the visual trend observed in the bar-plot, where students with higher proficiency levels tended to have completed more upper-division coursework.
 
 We analyzed the relationship between students’ self-assessed proficiency and comfort in programming, mathematics, and statistics using the survey data. Proficiency responses were converted from categorical to numeric values in order to run a numerical analysis, and for each domain, we fitted a simple linear regression model predicting comfort from proficiency. The results are summarized below:
 
@@ -142,4 +205,3 @@ ggplot(cor_long, aes(x = Comfort, y = Proficiency, fill = Correlation)) +
 ```
 
 From here, we see some interesting relations. Across the diagonal, we see the same earlier trend of higher proficiency equating higher comfort when aligned in the same domain. However, cross-domain correlations are weaker, suggesting that proficiency in one area does not strongly predict comfort in another. Most notably, there appears to be no relationship whatsoever between math and programming. This pattern highlights that students’ perceived abilities are largely within the same domain, with comfort most closely tracking proficiency in the same area, particularly for statistics. The weaker cross-domain associations also suggest potential gaps in transferable confidence, indicating that even students who feel capable in one technical area may not feel equally comfortable applying those skills elsewhere. The relatively weaker associations highlight gaps where even motivated students may feel less confident relative to their proficiency, necessitating possible changes for curriculum planning and targeted support.
-
