@@ -1,0 +1,40 @@
+---
+title: "Class Survey Analysis Write Up"
+author: "Akhil Gorla"
+date: "2025-10-20"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Results
+
+To explore whether students’ preferences for project type and programming language vary depending on prior research experience, we conducted two chi-squared tests of independence.
+
+### Project Type Preference
+
+A chi-squared test examined the association between students’ prior research experience and their preferred project type (Industry, Lab, or Both).  
+The result was **not statistically significant**, χ²(2) = 0.13, *p* = 0.94, indicating that students with and without prior research experience showed **similar distributions of project preferences**.  
+In other words, research experience does not appear to influence whether students prefer working on an industry or lab-based project.
+
+### Programming Language Preference
+
+A second chi-squared test assessed the relationship between prior research experience and preferred programming language (Python, R, or mixed preferences).  
+This test was also **not significant**, χ²(3) = 1.42, *p* = 0.70, suggesting that **students’ programming language preferences are independent of their research experience**.
+
+### Summary of Findings
+
+| Test | χ² | df | p-value | Interpretation |
+|------|:--:|:--:|:--------:|----------------|
+| Project Type vs. Research Experience | 0.13 | 2 | 0.94 | No significant relationship |
+| Programming Language vs. Research Experience | 1.42 | 3 | 0.70 | No significant relationship |
+
+### Interpretation
+
+Across both tests, the p-values were well above 0.05, indicating **no evidence of dependence** between prior research experience and either project or language preference.  
+This suggests that students’ project and language choices are **likely influenced by factors other than research experience**, such as coursework, personal interest, or perceived career applicability.  
+From a practical perspective, this finding implies that offering a range of project types and languages can accommodate students effectively, regardless of their prior research involvement.
