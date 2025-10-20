@@ -1,0 +1,85 @@
+---
+title: "Project & language preferences vs. prior research experience"
+author: "Satvik Talchuru"
+date: 10/19/2025
+published-title: "Updated"
+editor: visual
+format: html
+code-copy: true
+execute:
+  message: false
+  warning: false
+  echo: false
+  cache: true
+---
+
+```{r}
+# load any other packages and read data here
+library(tidyverse)
+library(scales)
+library(knitr)
+library(tidyverse) 
+library(janitor)    
+library(forcats)   
+library(broom) 
+```
+
+```{r}
+source("../scripts/Satvik_Module0_Analysis.R")
+#| include: FALSE
+```
+
+## Executive summary
+
+This report examines the relationship between students' previous research experience and their preferences for project types (Industry, Lab, or Both) as well as their preferred programming languages (Python, R, or others). We combined the background and interest survey data from each respondent, organized the categories, and provided a summary of preferences within the groups based on their research experiences. A horizontal proportional bar chart illustrates the preferences for different projects, while two-proportion tests are used to compare Industry versus Lab and Python versus R among various groups. In summary, we see distinct variations in project choices based on research experience, whereas preferences for language reveal less significant differences.
+
+## Data description
+
+**Source:** The class survey is divided into two sections: background, which includes demographics and previous research, and interest, which covers project type and language preferences.\
+**Unit of analysis:** Responses from individual students.\
+**Essential factors utilized:** Previous research (Yes/No; obtained from rsrch), preferred_project (Industry, Laboratory, or Both; based on type), preferred_language_simplified (Python/R/No Preference/Other; from lang)\
+**Preparation:** Converted labels to lowercase and standardized them; combined data based on response_id and removed rows that were incomplete for the variables mentioned above.
+
+## Question of interest
+
+> We sought to understand how students’ project type preferences (industry-oriented, lab-based, or both) and programming language preferences (Python, R, or other) vary based on whether they have prior research experience.
+>
+> 1.  "How do project type (industry vs. lab) and language \# (Python vs. R) preferences vary by prior research experience?"
+
+## Findings
+
+```{r}
+ggplot(proj_tbl, aes(y = prior_research, x = pct, fill = preferred_project)) +
+geom_col(position = "fill", color = "white") +
+geom_text(aes(label = percent(pct, accuracy = 1)),
+position = position_stack(vjust = 0.5), size = 3) +
+scale_x_continuous(labels = percent) +
+labs(
+title = "Project Type Preferences by Research Experience",
+x = "Proportion",
+y = "Research Experience",
+fill = "Project Type"
+)
+```
+
+This bar chart displays how students' preferences for different types of projects vary based on whether they have prior research experience. In general, students from both groups expressed a significant preference for industry projects, with about two-thirds selecting “Industry” as their primary choice. Students lacking previous research experience were somewhat more inclined to select industry projects (71%) than those who had research experience (66%). In comparison, students who have previous research experience demonstrated a slightly greater inclination to favor lab projects or a combination of both types.
+
+```{r}
+proj_tbl %>%
+mutate(pct = percent(pct, accuracy = 1)) %>%
+arrange(prior_research, desc(n)) %>%
+select(prior_research, preferred_project, n, pct) %>%
+kable(col.names = c("Research Exp.", "Project Type", "Count", "Percent"))
+```
+
+Lab projects and a combination of both types of projects were more common among students who had previous research experience, indicating that involvement in academic or extracurricular activities may expand students' interests beyond projects focused solely on industry. Although industry projects are the most common, students with research experience generally display a somewhat broader range of project interests.
+
+```{r}
+lang_tbl %>%
+mutate(pct = percent(pct, accuracy = 1)) %>%
+arrange(prior_research, desc(n)) %>%
+select(prior_research, preferred_language_simplified, n, pct) %>%
+kable(col.names = c("Research Exp.", "Language", "Count", "Percent"))
+```
+
+Students, regardless of their previous research experience, mostly chose Python as their main programming language. However, those who had research experience indicated a slightly greater number of users who preferred R.
