@@ -1,7 +1,8 @@
----
-title: "Project & language preferences vs. prior research experience"
-author: "Satvik Talchuru"
-date: 10/19/2025
+=======
+title: "Analysis of class surveys"
+author: "Pratyush Rallapally, Anish Senthil, Satvik Talchuru, Andrew Guerra, Akhil Gorla"
+date: last-modified
+>>>>>>> origin
 published-title: "Updated"
 editor: visual
 format: html
@@ -15,7 +16,6 @@ execute:
 
 ```{r}
 # load any other packages and read data here
-library(tidyverse)
 library(scales)
 library(knitr)
 library(tidyverse) 
@@ -29,19 +29,59 @@ source("../scripts/Satvik_Module0_Analysis.R")
 #| include: FALSE
 ```
 
+```{r}
+library(dplyr)
+library(readr)
+library(here)
+
+df <- read_csv(here("data", "background-clean.csv"))
+
+# Convert proficiency to numeric 
+df <- df %>%
+  mutate(
+    prog.prof.num = case_when(
+      prog.prof == "beg" ~ 1,
+      prog.prof == "int" ~ 2,
+      prog.prof == "adv" ~ 3
+    ),
+    math.prof.num = case_when(
+      math.prof == "beg" ~ 1,
+      math.prof == "int" ~ 2,
+      math.prof == "adv" ~ 3
+    ),
+    stat.prof.num = case_when(
+      stat.prof == "beg" ~ 1,
+      stat.prof == "int" ~ 2,
+      stat.prof == "adv" ~ 3
+    )
+  )
+```
+
+>>>>>>> origin
+```
+
 ## Executive summary
 
 This report examines the relationship between students' previous research experience and their preferences for project types (Industry, Lab, or Both) as well as their preferred programming languages (Python, R, or others). We combined the background and interest survey data from each respondent, organized the categories, and provided a summary of preferences within the groups based on their research experiences. A horizontal proportional bar chart illustrates the preferences for different projects, while two-proportion tests are used to compare Industry versus Lab and Python versus R among various groups. In summary, we see distinct variations in project choices based on research experience, whereas preferences for language reveal less significant differences.
 
 ## Data description
 
+<<<<<<< HEAD
 **Source:** The class survey is divided into two sections: background, which includes demographics and previous research, and interest, which covers project type and language preferences.\
 **Unit of analysis:** Responses from individual students.\
 **Essential factors utilized:** Previous research (Yes/No; obtained from rsrch), preferred_project (Industry, Laboratory, or Both; based on type), preferred_language_simplified (Python/R/No Preference/Other; from lang)\
 **Preparation:** Converted labels to lowercase and standardized them; combined data based on response_id and removed rows that were incomplete for the variables mentioned above.
+=======
+This dataset contains survey responses from UCSB undergraduate students enrolled in PSTAT197A, collected to capture their academic background, skills, and project interests. The survey collected personal information alongside self-reported proficiency and comfort in programming, mathematics, and statistics. Additional background measures include the number of upper-division courses completed, domain specialization, and prior research experience in data science and other areas.
 
-## Question of interest
+The survey also recorded students’ project preferences, including preferred project type (industry vs. lab), programming language, domain, and data science areas of interest, as well as open-ended goals and comments for project placement. Several variables are binary (yes/no), ordinal, numeric, or categorical.
 
+Overall, the dataset provides a detailed profile of students’ academic preparation, skill self-assessment, and project preferences, suitable for analyzing patterns in preparation, interests, and experiences among the PSTAT197A cohort. For our purposes, we believe the data provides a valuable snapshot of PSTAT majors, particularly those most motivated and engaged. While the survey cohort is naturally self-selected, this bias makes the data especially informative: it highlights where the department’s most engaged feel well-prepared or identify gaps in their skills. Understanding these patterns is crucial, as it allows the department to identify strengths and potential areas for curricular improvement.
+>>>>>>> origin
+
+## Questions of interest
+
+<<<<<<< HEAD
 > We sought to understand how students’ project type preferences (industry-oriented, lab-based, or both) and programming language preferences (Python, R, or other) vary based on whether they have prior research experience.
 >
 > 1.  "How do project type (industry vs. lab) and language \# (Python vs. R) preferences vary by prior research experience?"
@@ -83,3 +123,90 @@ kable(col.names = c("Research Exp.", "Language", "Count", "Percent"))
 ```
 
 Students, regardless of their previous research experience, mostly chose Python as their main programming language. However, those who had research experience indicated a slightly greater number of users who preferred R.
+
+
+3.  *To what extent do students’ self-assessed proficiency in programming, mathematics, and statistics align with their reported comfort in these domains?*
+
+## Findings
+
+We analyzed the relationship between students’ self-assessed proficiency and comfort in programming, mathematics, and statistics using the survey data. Proficiency responses were converted from categorical to numeric values, and for each domain, we fitted a simple linear regression model predicting comfort from proficiency. The results are summarized below:
+
+```{r}
+lm_prog <- lm(prog.comf ~ prog.prof.num, data = df)
+lm_math <- lm(math.comf ~ math.prof.num, data = df)
+lm_stat <- lm(stat.comf ~ stat.prof.num, data = df)
+
+# clean result
+lm_results <- tibble(
+  domain = c("Programming", "Mathematics", "Statistics"),
+  intercept = c(coef(lm_prog)[1], coef(lm_math)[1], coef(lm_stat)[1]),
+  slope = c(coef(lm_prog)[2], coef(lm_math)[2], coef(lm_stat)[2]),
+  r_squared = c(summary(lm_prog)$r.squared,
+                summary(lm_math)$r.squared,
+                summary(lm_stat)$r.squared)
+)
+
+(lm_results)
+```
+
+In general, across all three domains, higher self-rated proficiency is associated with higher reported comfort. This expected relationship is the strongest in statistics, at almost twice the extent compared to programming and mathematics, who had nearly identical moderate associations.
+
+We further explored these relationships through other visualizations, including scatterplots and a correlation heatmap.
+
+```{r}
+plot_data <- bind_rows(
+  df %>% select(prof = prog.prof.num, comf = prog.comf) %>% mutate(domain = "Programming"),
+  df %>% select(prof = math.prof.num, comf = math.comf) %>% mutate(domain = "Mathematics"),
+  df %>% select(prof = stat.prof.num, comf = stat.comf) %>% mutate(domain = "Statistics")
+)
+
+ggplot(plot_data, aes(x = prof, y = comf)) +
+  geom_jitter(width = 0.2, height = 0.2, alpha = 0.6, color = "darkblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  facet_wrap(~ domain, scales = "free") +
+  labs(
+    x = "Self-rated Proficiency (1=beg, 2=int, 3=adv)",
+    y = "Comfort Level (1-5)",
+    title = "Linear Regression of Comfort on Proficiency by Domain"
+  ) +
+  theme_minimal()
+```
+
+In addition to seeing how the original data is clustered, the plots visually reaffirm our conclusions; within the same domain, students generally feel more confident the more proficient they are.
+
+Thus far, the analysis has been domain-specific. To explore correlations across domains, we generated a correlation matrix, visualized in the form of a heatmap below:
+
+```{r}
+# cor matrix
+prof_vars <- df %>% select(prog.prof.num, math.prof.num, stat.prof.num)
+comf_vars <- df %>% select(prog.comf, math.comf, stat.comf)
+
+# compute correlations
+cor_matrix <- cor(prof_vars, comf_vars, use = "complete.obs")
+
+# convert to long format for ggplot
+cor_long <- as.data.frame(cor_matrix) %>%
+  rownames_to_column(var = "Proficiency") %>%
+  pivot_longer(
+    cols = -Proficiency,
+    names_to = "Comfort",
+    values_to = "Correlation"
+  )
+
+
+ggplot(cor_long, aes(x = Comfort, y = Proficiency, fill = Correlation)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 5) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,
+                       limits = c(-1, 1)) +
+  labs(
+    title = "Correlation Between Proficiency and Comfort by Domain",
+    x = "Comfort",
+    y = "Proficiency"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) #experimenting with dimensional variables
+```
+
+From here, we see some interesting relations. Across the diagonal, we see the same earlier trend of higher proficiency = higher comfort when aligned in the same domain. However, cross-domain correlations are weaker, suggesting that proficiency in one area does not strongly predict comfort in another. Most notably, there appears to be no relationship whatsoever between math and programming. This pattern highlights that students’ perceived abilities are largely within the same domain, with comfort most closely tracking proficiency in the same area, particularly for statistics. The weaker cross-domain associations also suggest potential gaps in transferable confidence, indicating that even students who feel capable in one technical area may not feel equally comfortable applying those skills elsewhere. The relatively weaker alignments highlight gaps where even motivated students may feel less confident relative to their proficiency, necessitating actionable insight for curriculum planning and targeted support.
+>>>>>>> origin
